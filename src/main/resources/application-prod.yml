@@ -1,0 +1,30 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION:PT8H}
+  bootstrap:
+    admin-email: ${ADMIN_EMAIL:}
+    admin-password: ${ADMIN_PASSWORD:}
+  whatsapp:
+    admin-number: ${WHATSAPP_ADMIN_NUMBER}
+  storage:
+    upload-directory: ${UPLOAD_DIRECTORY}
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS}
+
+server:
+  forward-headers-strategy: framework
+
+logging:
+  level:
+    root: INFO
+    com.asalkartechworks.kshitijascreations: INFO
