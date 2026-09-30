@@ -55,4 +55,10 @@ public class AdminProductMediaController {
     public void delete(@PathVariable Long productId, @PathVariable Long mediaId) {
         productMediaService.delete(productId, mediaId);
     }
+
+    @PostMapping("/{mediaId}/primary")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void setPrimary(@PathVariable Long productId, @PathVariable Long mediaId) {
+        productMediaService.setPrimary(productId, mediaId);
+    }
 }

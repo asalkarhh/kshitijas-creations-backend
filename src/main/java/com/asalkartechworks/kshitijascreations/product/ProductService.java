@@ -85,6 +85,13 @@ public class ProductService {
         return productMapper.toAdminResponse(productRepository.save(product), List.of());
     }
 
+    @Transactional(readOnly = true)
+    public AdminProductResponse adminById(Long id) {
+        Product product = getProduct(id);
+        List<ProductMedia> media = productMediaRepository.findAllByProductIdOrderByPrimaryMediaDescDisplayOrderAsc(id);
+        return productMapper.toAdminResponse(product, media);
+    }
+
     @Transactional
     public AdminProductResponse update(Long id, ProductRequest request) {
         Product product = getProduct(id);

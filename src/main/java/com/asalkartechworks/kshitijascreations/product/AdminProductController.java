@@ -50,6 +50,11 @@ public class AdminProductController {
         return productService.create(request);
     }
 
+    @GetMapping("/{id}")
+    public AdminProductResponse get(@PathVariable Long id) {
+        return productService.adminById(id);
+    }
+
     @PutMapping("/{id}")
     public AdminProductResponse update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
         return productService.update(id, request);

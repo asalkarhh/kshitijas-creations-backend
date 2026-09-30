@@ -97,6 +97,15 @@ public class ProductMediaService {
         scheduleDeleteAfterCommit(thumbnailKey);
     }
 
+    @Transactional
+    public void setPrimary(Long productId, Long mediaId) {
+        ProductMedia media = productMediaRepository.findByIdAndProductId(mediaId, productId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "PRODUCT_MEDIA_NOT_FOUND", "Product media not found"));
+        productMediaRepository.clearPrimaryMedia(productId);
+        media.setPrimaryMedia(true);
+        productMediaRepository.save(media);
+    }
+
     private void scheduleDeleteAfterCommit(String fileKey) {
         if (fileKey == null) {
             return;
