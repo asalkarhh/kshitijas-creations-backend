@@ -49,7 +49,9 @@ public class OrderMapper {
                 order.getStatus(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
-                items.stream().map(this::toItemResponse).toList()
+                items.stream().map(this::toItemResponse).toList(), List.of()
+                , order.getReviewRating(), order.getReviewText(), order.getReviewerName(), order.getReviewerCity(),
+                order.getReviewProductId(), order.isReviewPublished(), order.isReviewUsed()
         );
     }
 

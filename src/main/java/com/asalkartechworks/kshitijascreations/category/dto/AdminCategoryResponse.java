@@ -8,6 +8,7 @@ public record AdminCategoryResponse(
         String slug,
         String description,
         int displayOrder,
+        long productCount,
         boolean active,
         Instant createdAt,
         Instant updatedAt

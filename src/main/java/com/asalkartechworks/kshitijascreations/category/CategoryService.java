@@ -28,7 +28,8 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public List<AdminCategoryResponse> adminList() {
         return categoryRepository.findAllByOrderByDisplayOrderAscNameAsc().stream()
-                .map(categoryMapper::toAdminResponse)
+                .map(category -> categoryMapper.toAdminResponse(
+                        category, productRepository.countByCategoryId(category.getId())))
                 .toList();
     }
 
@@ -45,7 +46,8 @@ public class CategoryService {
         Category category = new Category();
         apply(category, request);
         category.setSlug(nextSlug(request.name(), null));
-        return categoryMapper.toAdminResponse(categoryRepository.save(category));
+        Category saved = categoryRepository.save(category);
+        return categoryMapper.toAdminResponse(saved, 0);
     }
 
     @Transactional
@@ -57,7 +59,8 @@ public class CategoryService {
         if (nameChanged) {
             category.setSlug(nextSlug(request.name(), id));
         }
-        return categoryMapper.toAdminResponse(category);
+        return categoryMapper.toAdminResponse(category,
+                productRepository.countByCategoryId(category.getId()));
     }
 
     @Transactional

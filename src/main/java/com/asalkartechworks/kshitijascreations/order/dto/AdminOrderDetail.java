@@ -20,6 +20,8 @@ public record AdminOrderDetail(
         OrderStatus status,
         Instant createdAt,
         Instant updatedAt,
-        List<AdminOrderItemResponse> items
+        List<AdminOrderItemResponse> items, List<AdminProductReview> reviews
+        , BigDecimal reviewRating, String reviewText, String reviewerName, String reviewerCity,
+        Long reviewProductId, boolean reviewPublished, boolean reviewUsed
 ) {
 }

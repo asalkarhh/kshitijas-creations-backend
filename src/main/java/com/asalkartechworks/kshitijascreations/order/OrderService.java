@@ -6,6 +6,7 @@ import com.asalkartechworks.kshitijascreations.domain.entity.Order;
 import com.asalkartechworks.kshitijascreations.domain.entity.OrderItem;
 import com.asalkartechworks.kshitijascreations.domain.entity.Product;
 import com.asalkartechworks.kshitijascreations.domain.entity.ProductMedia;
+import com.asalkartechworks.kshitijascreations.domain.entity.OrderProductReview;
 import com.asalkartechworks.kshitijascreations.domain.enums.OrderStatus;
 import com.asalkartechworks.kshitijascreations.order.dto.AdminOrderDetail;
 import com.asalkartechworks.kshitijascreations.order.dto.AdminOrderSummary;
@@ -16,6 +17,7 @@ import com.asalkartechworks.kshitijascreations.repository.OrderItemRepository;
 import com.asalkartechworks.kshitijascreations.repository.OrderRepository;
 import com.asalkartechworks.kshitijascreations.repository.ProductMediaRepository;
 import com.asalkartechworks.kshitijascreations.repository.ProductRepository;
+import com.asalkartechworks.kshitijascreations.repository.OrderProductReviewRepository;
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,6 +26,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.math.RoundingMode;
+import com.asalkartechworks.kshitijascreations.order.dto.ReviewDetails;
+import com.asalkartechworks.kshitijascreations.order.dto.ReviewLinkResponse;
+import com.asalkartechworks.kshitijascreations.order.dto.SubmitReviewRequest;
+import com.asalkartechworks.kshitijascreations.order.dto.SubmitReviewsRequest;
+import com.asalkartechworks.kshitijascreations.order.dto.AdminProductReview;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class OrderService {
+    private final OrderProductReviewRepository reviewRepository;
 
     private static final Set<OrderStatus> FINAL_STATUSES = Set.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED);
     private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(
@@ -177,7 +187,10 @@ public class OrderService {
     public AdminOrderDetail adminDetail(Long id) {
         Order order = getOrder(id);
         List<OrderItem> items = orderItemRepository.findAllByOrderIdWithProduct(id);
-        return orderMapper.toDetail(order, items);
+        AdminOrderDetail base = orderMapper.toDetail(order, items);
+        Map<Long, String> names = items.stream().collect(Collectors.toMap(i -> i.getProduct().getId(), OrderItem::getProductName, (a,b) -> a));
+        List<AdminProductReview> reviews = reviewRepository.findByOrderId(id).stream().map(r -> new AdminProductReview(r.getId(), r.getProductId(), names.getOrDefault(r.getProductId(), "Product"), r.getRating(), r.getReviewText(), r.getReviewerName(), r.getReviewerCity(), r.isPublished())).toList();
+        return new AdminOrderDetail(base.id(), base.orderNumber(), base.customerName(), base.mobileNumber(), base.addressLine(), base.city(), base.state(), base.postalCode(), base.customerNote(), base.subtotal(), base.totalAmount(), base.status(), base.createdAt(), base.updatedAt(), base.items(), reviews, base.reviewRating(), base.reviewText(), base.reviewerName(), base.reviewerCity(), base.reviewProductId(), base.reviewPublished(), base.reviewUsed());
     }
 
     @Transactional
@@ -201,6 +214,71 @@ public class OrderService {
         order.setStatus(newStatus);
         List<OrderItem> items = orderItemRepository.findAllByOrderIdWithProduct(id);
         return orderMapper.toDetail(order, items);
+    }
+
+    @Transactional
+    public ReviewLinkResponse createReviewLink(Long id, String publicBaseUrl) {
+        Order order = getOrder(id);
+        if (order.getStatus() != OrderStatus.COMPLETED) {
+            throw new ApiException(HttpStatus.CONFLICT, "REVIEW_NOT_AVAILABLE", "Reviews can be requested only for completed orders.");
+        }
+        if (order.isReviewUsed()) {
+            throw new ApiException(HttpStatus.CONFLICT, "REVIEW_ALREADY_SUBMITTED", "This order has already been reviewed.");
+        }
+        // Each request creates a fresh token, invalidating any previously issued link.
+        order.setReviewToken(UUID.randomUUID().toString());
+        order.setReviewStarted(false);
+        return new ReviewLinkResponse(publicBaseUrl + "/review/" + order.getReviewToken());
+    }
+
+    @Transactional
+    public ReviewDetails reviewDetails(String token) {
+        Order order = reviewOrder(token);
+        order.setReviewStarted(true);
+        List<OrderItem> items = orderItemRepository.findAllByOrderIdWithProduct(order.getId());
+        return new ReviewDetails(order.getOrderNumber(), order.getCustomerName(), items.stream().map(i -> new ReviewDetails.ReviewProduct(i.getProduct().getId(), i.getProductName())).toList());
+    }
+
+    @Transactional
+    public void submitReview(String token, SubmitReviewRequest request) {
+        Order order = reviewOrder(token);
+        if (order.isReviewUsed() || !order.isReviewStarted()) throw new ApiException(HttpStatus.CONFLICT, "REVIEW_LINK_EXPIRED", "This review link has expired.");
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdWithProduct(order.getId());
+        if (orderItems.stream().noneMatch(i -> i.getProduct().getId().equals(request.productId()))) throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_PRODUCT", "That product was not part of this order.");
+        if (request.rating().multiply(java.math.BigDecimal.valueOf(2)).remainder(java.math.BigDecimal.ONE).compareTo(java.math.BigDecimal.ZERO) != 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_RATING", "Rating must use 0.5 star increments.");
+        }
+        order.setReviewRating(request.rating().setScale(1, RoundingMode.HALF_UP));
+        order.setReviewText(request.text() == null ? null : request.text().trim());
+        order.setReviewerName(order.getCustomerName());
+        order.setReviewerCity(order.getCity());
+        order.setReviewProductId(request.productId());
+        order.setReviewUsed(true);
+    }
+
+    @Transactional
+    public void submitReviews(String token, SubmitReviewsRequest request) {
+        Order order = reviewOrder(token);
+        if (order.isReviewUsed() || !order.isReviewStarted()) throw new ApiException(HttpStatus.CONFLICT, "REVIEW_LINK_EXPIRED", "This review link has expired.");
+        List<OrderItem> items = orderItemRepository.findAllByOrderIdWithProduct(order.getId());
+        Set<Long> purchased = items.stream().map(i -> i.getProduct().getId()).collect(Collectors.toSet());
+        if (request.reviews().size() != purchased.size() || request.reviews().stream().map(SubmitReviewRequest::productId).collect(Collectors.toSet()).size() != purchased.size() || !purchased.equals(request.reviews().stream().map(SubmitReviewRequest::productId).collect(Collectors.toSet()))) throw new ApiException(HttpStatus.BAD_REQUEST, "REVIEWS_INCOMPLETE", "Submit a review for every purchased product.");
+        request.reviews().forEach(r -> { if (r.rating().multiply(BigDecimal.valueOf(2)).remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) != 0) throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_RATING", "Rating must use 0.5 star increments."); OrderProductReview review = new OrderProductReview(); review.setOrderId(order.getId()); review.setProductId(r.productId()); review.setRating(r.rating().setScale(1, RoundingMode.HALF_UP)); review.setReviewText(r.text() == null ? null : r.text().trim()); review.setReviewerName(order.getCustomerName()); review.setReviewerCity(order.getCity()); reviewRepository.save(review); });
+        order.setReviewUsed(true);
+    }
+
+    @Transactional
+    public void setReviewPublished(Long id, boolean published) {
+        Order order = getOrder(id);
+        if (!order.isReviewUsed()) throw new ApiException(HttpStatus.CONFLICT, "REVIEW_NOT_SUBMITTED", "The customer has not submitted a review yet.");
+        order.setReviewPublished(published);
+    }
+
+    @Transactional public void setProductReviewPublished(Long reviewId, boolean published) { OrderProductReview review = reviewRepository.findById(reviewId).orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "REVIEW_NOT_FOUND", "Review not found.")); review.setPublished(published); }
+
+    private Order reviewOrder(String token) {
+        return orderRepository.findByReviewToken(token).orElseThrow(() -> new ApiException(
+                HttpStatus.NOT_FOUND, "REVIEW_LINK_NOT_FOUND", "This review link is invalid or expired."));
     }
 
     private Order getOrder(Long id) {

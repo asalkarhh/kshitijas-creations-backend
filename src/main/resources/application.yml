@@ -41,6 +41,7 @@ management:
         enabled: true
 
 app:
+  public-site-url: ${PUBLIC_SITE_URL:http://localhost:5173}
   jwt:
     secret: ${JWT_SECRET:local-development-jwt-secret-change-me-1234567890}
     expiration: ${JWT_EXPIRATION:PT8H}
@@ -56,7 +57,7 @@ app:
     max-image-size: 5MB
     max-video-size: 30MB
   cors:
-    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://192.168.1.9:5173}
   swagger:
     enabled: ${SWAGGER_ENABLED:false}
   security:

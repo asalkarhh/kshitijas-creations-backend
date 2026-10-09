@@ -61,4 +61,21 @@ public class Order extends AuditableEntity {
 
     @Column(name = "whatsapp_opened", nullable = false)
     private boolean whatsappOpened;
+
+    @Column(name = "review_token", unique = true, length = 80)
+    private String reviewToken;
+
+    @Column(name = "review_used", nullable = false)
+    private boolean reviewUsed;
+
+    @Column(name = "review_rating", precision = 2, scale = 1)
+    private BigDecimal reviewRating;
+
+    @Column(name = "review_text", length = 2000)
+    private String reviewText;
+    @Column(name = "review_started", nullable = false) private boolean reviewStarted;
+    @Column(name = "reviewer_name", length = 200) private String reviewerName;
+    @Column(name = "reviewer_city", length = 120) private String reviewerCity;
+    @Column(name = "review_product_id") private Long reviewProductId;
+    @Column(name = "review_published", nullable = false) private boolean reviewPublished;
 }

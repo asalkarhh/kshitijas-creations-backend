@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class CategoryMapper {
 
-    public AdminCategoryResponse toAdminResponse(Category category) {
+    public AdminCategoryResponse toAdminResponse(Category category, long productCount) {
         return new AdminCategoryResponse(
                 category.getId(), category.getName(), category.getSlug(), category.getDescription(),
-                category.getDisplayOrder(), category.isActive(), category.getCreatedAt(), category.getUpdatedAt()
+                category.getDisplayOrder(), productCount, category.isActive(), category.getCreatedAt(), category.getUpdatedAt()
         );
     }
 

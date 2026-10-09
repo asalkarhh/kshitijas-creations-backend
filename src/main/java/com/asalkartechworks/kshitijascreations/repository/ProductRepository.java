@@ -23,6 +23,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     boolean existsByCategoryId(Long categoryId);
 
+    long countByCategoryId(Long categoryId);
+
     @Override
     @EntityGraph(attributePaths = "category")
     Page<Product> findAll(Specification<Product> specification, Pageable pageable);

@@ -20,6 +20,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import com.asalkartechworks.kshitijascreations.order.dto.ReviewLinkResponse;
+import com.asalkartechworks.kshitijascreations.config.AppProperties;
 
 @Validated
 @RestController
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminOrderController {
 
     private final OrderService orderService;
+    private final AppProperties appProperties;
 
     @GetMapping
     public PageResponse<AdminOrderSummary> list(
@@ -58,4 +63,17 @@ public class AdminOrderController {
     ) {
         return orderService.updateStatus(id, request.status());
     }
+
+    @PostMapping("/{id}/review-link")
+    public ReviewLinkResponse reviewLink(@PathVariable Long id, @RequestHeader(value = "Origin", required = false) String origin) {
+        return orderService.createReviewLink(id, appProperties.getPublicSiteUrl());
+    }
+
+    @PatchMapping("/{id}/review")
+    public void publishReview(@PathVariable Long id, @RequestParam boolean published) {
+        orderService.setReviewPublished(id, published);
+    }
+
+    @PatchMapping("/review/{reviewId}")
+    public void publishProductReview(@PathVariable Long reviewId, @RequestParam boolean published) { orderService.setProductReviewPublished(reviewId, published); }
 }

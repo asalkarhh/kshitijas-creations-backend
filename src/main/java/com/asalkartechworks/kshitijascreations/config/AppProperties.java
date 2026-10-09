@@ -18,6 +18,8 @@ public class AppProperties {
     private final Cors cors = new Cors();
     private final Swagger swagger = new Swagger();
     private final Security security = new Security();
+    @Setter
+    private String publicSiteUrl;
 
     @Getter
     @Setter
