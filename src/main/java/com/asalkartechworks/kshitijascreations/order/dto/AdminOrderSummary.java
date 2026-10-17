@@ -13,6 +13,7 @@ public record AdminOrderSummary(
         BigDecimal totalAmount,
         int itemCount,
         OrderStatus status,
+        boolean viewed,
         Instant createdAt
 ) {
 }

@@ -184,13 +184,22 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
+    public long countUnviewed() {
+        return orderRepository.countByViewedFalse();
+    }
+
+    @Transactional
     public AdminOrderDetail adminDetail(Long id) {
         Order order = getOrder(id);
+        if (!order.isViewed()) {
+            order.setViewed(true);
+            orderRepository.save(order);
+        }
         List<OrderItem> items = orderItemRepository.findAllByOrderIdWithProduct(id);
         AdminOrderDetail base = orderMapper.toDetail(order, items);
         Map<Long, String> names = items.stream().collect(Collectors.toMap(i -> i.getProduct().getId(), OrderItem::getProductName, (a,b) -> a));
         List<AdminProductReview> reviews = reviewRepository.findByOrderId(id).stream().map(r -> new AdminProductReview(r.getId(), r.getProductId(), names.getOrDefault(r.getProductId(), "Product"), r.getRating(), r.getReviewText(), r.getReviewerName(), r.getReviewerCity(), r.isPublished())).toList();
-        return new AdminOrderDetail(base.id(), base.orderNumber(), base.customerName(), base.mobileNumber(), base.addressLine(), base.city(), base.state(), base.postalCode(), base.customerNote(), base.subtotal(), base.totalAmount(), base.status(), base.createdAt(), base.updatedAt(), base.items(), reviews, base.reviewRating(), base.reviewText(), base.reviewerName(), base.reviewerCity(), base.reviewProductId(), base.reviewPublished(), base.reviewUsed());
+        return new AdminOrderDetail(base.id(), base.orderNumber(), base.customerName(), base.mobileNumber(), base.addressLine(), base.city(), base.state(), base.postalCode(), base.customerNote(), base.subtotal(), base.totalAmount(), base.status(), base.viewed(), base.createdAt(), base.updatedAt(), base.items(), reviews, base.reviewRating(), base.reviewText(), base.reviewerName(), base.reviewerCity(), base.reviewProductId(), base.reviewPublished(), base.reviewUsed());
     }
 
     @Transactional

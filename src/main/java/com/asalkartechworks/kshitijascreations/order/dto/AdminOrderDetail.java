@@ -18,6 +18,7 @@ public record AdminOrderDetail(
         BigDecimal subtotal,
         BigDecimal totalAmount,
         OrderStatus status,
+        boolean viewed,
         Instant createdAt,
         Instant updatedAt,
         List<AdminOrderItemResponse> items, List<AdminProductReview> reviews

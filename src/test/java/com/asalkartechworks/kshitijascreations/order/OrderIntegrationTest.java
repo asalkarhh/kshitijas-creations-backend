@@ -413,7 +413,36 @@ class OrderIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.totalOrders").value(2))
                 .andExpect(jsonPath("$.placedOrders").value(2))
                 .andExpect(jsonPath("$.confirmedOrders").value(0))
+                .andExpect(jsonPath("$.unviewedOrders").value(2))
                 .andExpect(jsonPath("$.recentOrders", hasSize(2)));
+    }
+
+    // ---- 22. Unviewed count reduces on detail view ----
+    @Test
+    void unviewedCountReducesWhenOrderViewed() throws Exception {
+        long productId = createAvailableProduct("Unviewed Test", "UV-001", 100);
+        String orderNum1 = placeTestOrder(productId);
+        placeTestOrder(productId);
+
+        // Initially 2 unviewed orders
+        mockMvc.perform(get("/api/v1/admin/orders/unviewed-count")
+                        .header("Authorization", bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(2));
+
+        Order order1 = orderRepository.findByOrderNumber(orderNum1).orElseThrow();
+
+        // Admin views order 1 details
+        mockMvc.perform(get("/api/v1/admin/orders/{id}", order1.getId())
+                        .header("Authorization", bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.viewed").value(true));
+
+        // Unviewed count drops to 1
+        mockMvc.perform(get("/api/v1/admin/orders/unviewed-count")
+                        .header("Authorization", bearer()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(1));
     }
 
     // ---- Helper methods ----

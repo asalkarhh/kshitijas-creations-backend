@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.time.Instant;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -49,6 +50,11 @@ public class AdminOrderController {
             default -> Sort.by(Sort.Order.desc("createdAt"));
         };
         return orderService.adminList(search, status, fromDate, toDate, PageRequest.of(page, size, sorting));
+    }
+
+    @GetMapping("/unviewed-count")
+    public Map<String, Long> unviewedCount() {
+        return Map.of("count", orderService.countUnviewed());
     }
 
     @GetMapping("/{id}")

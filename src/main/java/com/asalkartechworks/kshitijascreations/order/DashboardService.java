@@ -35,6 +35,7 @@ public class DashboardService {
         long confirmedOrders = orderRepository.countByStatus(OrderStatus.CONFIRMED);
         long completedOrders = orderRepository.countByStatus(OrderStatus.COMPLETED);
         long cancelledOrders = orderRepository.countByStatus(OrderStatus.CANCELLED);
+        long unviewedOrders = orderRepository.countByViewedFalse();
 
         List<Order> recentOrders = orderRepository.findTop5ByOrderByCreatedAtDesc();
         List<Long> orderIds = recentOrders.stream().map(Order::getId).toList();
@@ -52,6 +53,7 @@ public class DashboardService {
                 confirmedOrders,
                 completedOrders,
                 cancelledOrders,
+                unviewedOrders,
                 recentSummaries
         );
     }

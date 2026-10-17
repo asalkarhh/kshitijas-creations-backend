@@ -10,6 +10,7 @@ public record DashboardResponse(
         long confirmedOrders,
         long completedOrders,
         long cancelledOrders,
+        long unviewedOrders,
         List<AdminOrderSummary> recentOrders
 ) {
 }

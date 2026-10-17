@@ -18,6 +18,8 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     long countByStatus(OrderStatus status);
 
+    long countByViewedFalse();
+
     List<Order> findTop5ByOrderByCreatedAtDesc();
 
     @Query(value = "SELECT nextval('order_number_seq')", nativeQuery = true)

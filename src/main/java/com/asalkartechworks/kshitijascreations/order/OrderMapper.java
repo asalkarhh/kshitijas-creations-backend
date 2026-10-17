@@ -29,6 +29,7 @@ public class OrderMapper {
                 order.getTotalAmount(),
                 itemCount,
                 order.getStatus(),
+                order.isViewed(),
                 order.getCreatedAt()
         );
     }
@@ -47,6 +48,7 @@ public class OrderMapper {
                 order.getSubtotal(),
                 order.getTotalAmount(),
                 order.getStatus(),
+                order.isViewed(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
                 items.stream().map(this::toItemResponse).toList(), List.of()

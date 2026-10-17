@@ -62,6 +62,9 @@ public class Order extends AuditableEntity {
     @Column(name = "whatsapp_opened", nullable = false)
     private boolean whatsappOpened;
 
+    @Column(name = "viewed", nullable = false)
+    private boolean viewed;
+
     @Column(name = "review_token", unique = true, length = 80)
     private String reviewToken;
 
