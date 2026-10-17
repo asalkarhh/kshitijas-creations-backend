@@ -64,6 +64,11 @@ app:
     login-max-attempts: 5
     login-cooldown-minutes: 15
     order-rate-limit-per-hour: 10
+  push:
+    enabled: ${PUSH_ENABLED:true}
+    public-key: ${VAPID_PUBLIC_KEY:BO_QEwNnXaQcFI1Qcr7tx8yJAErnzZcZFDNSWsutI3Wvuxu4pk-5KfWIH1yAdUGzymsJs8Jb0wkppwVUHhgkRnc}
+    private-key: ${VAPID_PRIVATE_KEY:Wk46Ws8Eu60FacxXadEXYM3CYv_VCgO9jugno9JBSzQ}
+    subject: ${VAPID_SUBJECT:mailto:admin@kshitijascreations.in}
 
 springdoc:
   api-docs:

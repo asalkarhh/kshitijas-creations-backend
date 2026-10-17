@@ -43,6 +43,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.asalkartechworks.kshitijascreations.push.PushNotificationService;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +63,7 @@ public class OrderService {
     private final OrderNumberGenerator orderNumberGenerator;
     private final WhatsAppLinkService whatsAppLinkService;
     private final OrderMapper orderMapper;
+    private final PushNotificationService pushNotificationService;
 
     @Transactional
     public PlaceOrderResponse placeOrder(PlaceOrderRequest request) {
@@ -150,6 +152,13 @@ public class OrderService {
 
         orderRepository.save(order);
         orderItemRepository.saveAll(items);
+        // Push delivery is best-effort and must never make a valid customer order fail.
+        try {
+            pushNotificationService.notifyNewOrder(order.getOrderNumber());
+        } catch (Exception exception) {
+            org.slf4j.LoggerFactory.getLogger(OrderService.class)
+                    .warn("Could not send new-order push notification for {}", order.getOrderNumber(), exception);
+        }
 
         String whatsappUrl = whatsAppLinkService.generateLink(order, items);
 

@@ -18,6 +18,7 @@ public class AppProperties {
     private final Cors cors = new Cors();
     private final Swagger swagger = new Swagger();
     private final Security security = new Security();
+    private final Push push = new Push();
     @Setter
     private String publicSiteUrl;
 
@@ -73,5 +74,13 @@ public class AppProperties {
         private int loginMaxAttempts = 5;
         private int loginCooldownMinutes = 15;
         private int orderRateLimitPerHour = 10;
+    }
+
+    @Getter @Setter
+    public static class Push {
+        private boolean enabled = true;
+        private String publicKey;
+        private String privateKey;
+        private String subject = "mailto:admin@kshitijascreations.in";
     }
 }
